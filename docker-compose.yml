@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # База данных PostgreSQL
+  postgres:
+    image: postgres:13
+    container_name: httpchat-postgres
+    environment:
+      POSTGRES_DB: messages_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - httpchat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d messages_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka in KRaft mode (without ZooKeeper)
+  kafka:
+    image: bitnami/kafka:3.4
+    container_name: httpchat-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # KRaft mode settings
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      
+      # Controller settings
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_NODE_ID: 1
+      
+      # Cluster settings
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_DELETE_TOPIC_ENABLE: "true"
+      
+      # Log retention settings
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168
+      KAFKA_CFG_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_CFG_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    networks:
+      - httpchat-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Наше приложение
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: httpchat-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - DATABASE_URL=postgres://user:password@postgres:5432/messages_db?sslmode=disable
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=messages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - httpchat-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/statistics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  httpchat-network:
+    driver: bridge

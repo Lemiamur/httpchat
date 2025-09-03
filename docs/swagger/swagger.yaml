@@ -1,0 +1,115 @@
+basePath: /
+definitions:
+  handler.CreateMessageRequest:
+    properties:
+      content:
+        example: Hello, world!
+        type: string
+    type: object
+  handler.CreateMessageResponse:
+    properties:
+      id:
+        example: 1
+        type: integer
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        example: Something went wrong
+        type: string
+    type: object
+  model.Statistics:
+    properties:
+      processed_messages:
+        type: integer
+      total_messages:
+        type: integer
+      unprocessed_messages:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Микросервис для обработки сообщений через HTTP API с сохранением в
+    PostgreSQL и отправкой в Kafka.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: HTTP Chat Service API
+  version: "1.0"
+paths:
+  /messages:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое сообщение и отправляет его в Kafka
+      parameters:
+      - description: Содержимое сообщения
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.CreateMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Создание сообщения
+      tags:
+      - messages
+  /messages/{id}/process:
+    put:
+      description: Помечает сообщение как обработанное
+      parameters:
+      - description: ID сообщения
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Обработка сообщения
+      tags:
+      - messages
+  /statistics:
+    get:
+      description: Возвращает статистику по обработанным и необработанным сообщениям
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Statistics'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Получение статистики
+      tags:
+      - statistics
+swagger: "2.0"

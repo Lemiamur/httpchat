@@ -1,0 +1,172 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Микросервис для обработки сообщений через HTTP API с сохранением в PostgreSQL и отправкой в Kafka.",
+        "title": "HTTP Chat Service API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/messages": {
+            "post": {
+                "description": "Создает новое сообщение и отправляет его в Kafka",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Создание сообщения",
+                "parameters": [
+                    {
+                        "description": "Содержимое сообщения",
+                        "name": "content",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/{id}/process": {
+            "put": {
+                "description": "Помечает сообщение как обработанное",
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Обработка сообщения",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID сообщения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics": {
+            "get": {
+                "description": "Возвращает статистику по обработанным и необработанным сообщениям",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Получение статистики",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Statistics"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.CreateMessageRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "Hello, world!"
+                }
+            }
+        },
+        "handler.CreateMessageResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Something went wrong"
+                }
+            }
+        },
+        "model.Statistics": {
+            "type": "object",
+            "properties": {
+                "processed_messages": {
+                    "type": "integer"
+                },
+                "total_messages": {
+                    "type": "integer"
+                },
+                "unprocessed_messages": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

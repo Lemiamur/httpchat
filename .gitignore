@@ -1,0 +1,40 @@
+# Binary files
+httpchat
+*.exe
+
+# Temporary files
+*.tmp
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Test database files
+/postgres_data
+
+# Configuration files with secrets
+.env
+
+# AI-generated files
+QWEN.md
+system_promt.md
+repomix-output.txt
+CODE_REVIEW.md
+TESTING_GUIDE.md
+
+# test scripts
+scripts/*
+
+# test data
+xss_test.json
+sql_injection_test.json
