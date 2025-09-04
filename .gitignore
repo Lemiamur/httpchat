@@ -32,9 +32,6 @@ repomix-output.txt
 CODE_REVIEW.md
 TESTING_GUIDE.md
 
-# test scripts
-scripts/*
-
 # test data
 xss_test.json
 sql_injection_test.json
